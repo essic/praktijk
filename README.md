@@ -1,2 +1,2 @@
 # praktijk
-Practice make the developers
+Practice make the developer
