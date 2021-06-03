@@ -1,10 +1,10 @@
 module StringCalculatorTests (stringCalculatorKata) where
 
-import qualified StringCalculator as SC
-import Test.Hspec
-import Test.Tasty
-import Test.Tasty.Hspec
-import Control.Exception (evaluate)
+import           Control.Exception (evaluate)
+import qualified StringCalculator  as SC
+import           Test.Hspec
+import           Test.Tasty
+import           Test.Tasty.Hspec
 
 tests :: Spec
 tests = do

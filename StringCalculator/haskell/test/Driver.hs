@@ -1,5 +1,5 @@
-import StringCalculatorTests (stringCalculatorKata)
-import Test.Tasty
+import           StringCalculatorTests (stringCalculatorKata)
+import           Test.Tasty
 
 main :: IO ()
 main = do

@@ -3,15 +3,12 @@
 
 module StringCalculator (add, safeAdd, NegativeNumbersException (..)) where
 
-import Control.Exception (throw)
-import qualified Data.Text as DT
-import Data.Text.Read
-  ( decimal,
-    signed,
-  )
-import qualified Text.Megaparsec as TM
+import           Control.Exception    (throw)
+import qualified Data.Text            as DT
+import           Data.Text.Read       (decimal, signed)
+import qualified Text.Megaparsec      as TM
 import qualified Text.Megaparsec.Char as TMC
-import qualified Text.Read as TR
+import qualified Text.Read            as TR
 
 newtype NegativeNumbersException = NNException Text
   deriving newtype (Show, Eq)
@@ -28,7 +25,7 @@ detectDelimiters t =
   if DT.isPrefixOf "//" t
     then case TM.runParser parseCustomDelimiters "Input" t of
       Right r -> Right r
-      Left _ -> Left "Error during parsing of delimiters"
+      Left _  -> Left "Error during parsing of delimiters"
     else Right (defaultDelimiters, t)
   where
     parseCustomDelimiters :: MDelimiterParser (Delimiters, Text)
@@ -103,7 +100,7 @@ throwOnNegativeNumbers :: [Int] -> [Int]
 throwOnNegativeNumbers i =
   case errorOnNegativeNumbers i of
     Right r -> r
-    Left e -> throw . NNException $ e
+    Left e  -> throw . NNException $ e
 
 safeAdd :: Text -> Either Text Int
 safeAdd a =
