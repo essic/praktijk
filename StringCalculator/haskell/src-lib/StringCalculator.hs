@@ -20,7 +20,9 @@ newtype Delimiters = Delims [Text]
 
 type MDelimiterParser = TM.Parsec Void Text
 
-detectDelimiters :: Text -> Either Text (Delimiters, Text)
+type Error = Text
+
+detectDelimiters :: Text -> Either Error (Delimiters, Text)
 detectDelimiters t =
   if DT.isPrefixOf "//" t
     then case TM.runParser parseCustomDelimiters "Input" t of
@@ -68,10 +70,10 @@ split d t =
     doSplit (Delims (x : xs)) t' =
       doSplit (Delims xs) (concat $ DT.splitOn x <$> t')
 
-toInts :: Delimiters -> Text -> Either Text [Int]
+toInts :: Delimiters -> Text -> Either Error [Int]
 toInts d = mapM toInt . split d
   where
-    toInt :: Text -> Either Text Int
+    toInt :: Text -> Either Error Int
     toInt b =
       case signed decimal b of
         Right (i, t) ->
@@ -80,41 +82,46 @@ toInts d = mapM toInt . split d
             else Left "Error during conversion to int !"
         Left e -> Left (DT.pack e)
 
-calculate :: [Int] -> Int
-calculate =
-  sum . filter (<= 1000)
 
-errorOnNegativeNumbers :: [Int] -> Either Text [Int]
-errorOnNegativeNumbers i =
+selectPositiveNumbers :: [Int] -> Either Error [Int]
+selectPositiveNumbers i =
   if any (< 0) i
     then toError $ fromInt <$> filter (< 0) i
     else Right i
   where
-    toError :: [Text] -> Either Text [Int]
+    toError :: [Text] -> Either Error [Int]
     toError = Left . DT.intercalate ","
 
     fromInt :: Int -> Text
     fromInt = DT.pack . (show :: Int -> String)
 
-throwOnNegativeNumbers :: [Int] -> [Int]
+throwOnNegativeNumbers :: [Int] -> Identity [Int]
 throwOnNegativeNumbers i =
-  case errorOnNegativeNumbers i of
-    Right r -> r
+  case selectPositiveNumbers i of
+    Right r -> Identity r
     Left e  -> throw . NNException $ e
 
-safeAdd :: Text -> Either Text Int
+calculateSum :: Functor f => ([Int] -> f [Int]) -> [Int] -> f Int
+calculateSum g i = sum . filter (<= 1000) <$> g i
+
+-- calculateSum' :: Functor f => ([Int] -> f [Int]) -> [Int] -> f Int
+-- calculateSum' g = fmap (sum . filter (<= 1000)) <$> g
+
+safeAdd :: Text -> Either Error Int
 safeAdd a =
   if DT.null a
     then Right 0
     else do
       b <- detectDelimiters a
       c <- uncurry toInts b
-      d <- errorOnNegativeNumbers c
-      pure $ calculate d
+      doSum c
+  where
+    doSum = calculateSum selectPositiveNumbers
 
 add :: Text -> Int
 add "" = 0
 add a =
-  let (Right unsafeResult) =
-        calculate . throwOnNegativeNumbers <$> (uncurry toInts =<< detectDelimiters a)
-   in unsafeResult
+  let doSum = calculateSum throwOnNegativeNumbers
+      (Right unsafeResult) =
+        doSum <$> (uncurry toInts =<< detectDelimiters a)
+   in runIdentity unsafeResult
