@@ -1,14 +1,16 @@
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 module StringCalculator (add, safeAdd, NegativeNumbersException (..)) where
 
-import           Control.Exception    (throw)
-import qualified Data.Text            as DT
-import           Data.Text.Read       (decimal, signed)
-import qualified Text.Megaparsec      as TM
-import qualified Text.Megaparsec.Char as TMC
-import qualified Text.Read            as TR
+import           Control.Exception       (throw)
+import qualified Data.Text               as DT
+import           Data.Text.Read          (decimal, signed)
+import qualified Text.Megaparsec         as TM
+import qualified Text.Megaparsec.Char    as TMC
+import qualified Text.Read               as TR
+import           Data.Either.Combinators (mapLeft)
 
 newtype NegativeNumbersException = NNException Text
   deriving newtype (Show, Eq)
@@ -25,9 +27,10 @@ type Error = Text
 detectDelimiters :: Text -> Either Error (Delimiters, Text)
 detectDelimiters t =
   if DT.isPrefixOf "//" t
-    then case TM.runParser parseCustomDelimiters "Input" t of
-      Right r -> Right r
-      Left _  -> Left "Error during parsing of delimiters"
+    then
+      mapLeft
+          (const "Error during parsing of delimiters")
+          (TM.runParser  parseCustomDelimiters "Input" t)
     else Right (defaultDelimiters, t)
   where
     parseCustomDelimiters :: MDelimiterParser (Delimiters, Text)
