@@ -45,7 +45,7 @@ maintainer:         lollancf37@gmail.com
 extra-source-files: CHANGELOG.md
 
 common common-options
-  build-depends:       base ^>= 4.14.1.0
+  build-depends:       base >= 4.6 && <4.15
                      , relude
                      , text
                      , either
